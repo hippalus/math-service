@@ -1,23 +1,26 @@
 package com.github.hippalus.mathservice.infra.service
 
 import com.github.hippalus.mathservice.domain.service.UpperNumberService
-import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.Cache
+import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Service
 
+private const val KEY_CURRENT_UPPER_NUMBER = "current-upper-number"
+private const val CACHE_UPPER_NUMBER = "upper-number"
+
 @Service
-class UpperNumberServiceInMemoryImpl : UpperNumberService {
+class UpperNumberServiceInMemoryImpl(
+    private val cacheManager: CacheManager
+) : UpperNumberService {
 
-    private var num: Long = 0
-
-    @CacheEvict(value = ["upper-number"], key = "'current-upper-number'")
     override fun setUpperNumber(upperNumber: Long) {
-        num = upperNumber
+        val cache: Cache = checkNotNull(cacheManager.getCache(CACHE_UPPER_NUMBER))
+        cache.put(KEY_CURRENT_UPPER_NUMBER, upperNumber)
     }
 
-    @Cacheable(value = ["upper-number"], key = "'current-upper-number'")
     override fun getUpperNumber(): Long {
-        return num
+        val cache: Cache = checkNotNull(cacheManager.getCache(CACHE_UPPER_NUMBER))
+        return (cache[KEY_CURRENT_UPPER_NUMBER]?.get() ?: 0L) as Long
     }
 
 
